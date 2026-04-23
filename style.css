@@ -1,0 +1,241 @@
+/* ========== GENERAL STYLES ========== */
+* {
+  margin: 10px;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #e0e0e0;
+  background-color: #0f1419;
+}
+
+/* ========== TYPOGRAPHY ========== */
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #64b5f6;
+  border-bottom: 3px solid #42a5f5;
+  padding-bottom: 0.75rem;
+  display: inline-block;
+}
+
+p {
+  margin-bottom: 1rem;
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+/* ========== HEADER ========== */
+header {
+  background: linear-gradient(135deg, #1a1f2e 0%, #2d3142 100%);
+  color: #fff;
+  padding: 3rem 1rem;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+header h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+header p {
+  font-size: 1.3rem;
+  color: #ecf0f1;
+  margin: 0;
+  font-weight: 300;
+}
+
+/* ========== NAVIGATION ========== */
+nav {
+  background-color: #1a1f2e;
+  padding: 0.75rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+}
+
+nav a {
+  color: #ecf0f1;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+}
+
+nav a:hover {
+  color: #42a5f5;
+  border-bottom: 2px solid #42a5f5;
+}
+
+/* ========== MAIN CONTAINER ========== */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ========== SECTIONS ========== */
+section {
+  padding: 3rem 0;
+  margin: 2rem 0;
+}
+
+section:nth-child(odd) {
+  background-color: #1a1f2e;
+  padding: 3rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+#about,
+#skills,
+#projects {
+  animation: fadeIn 0.6s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== SKILLS LIST ========== */
+#skills ul {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  padding: 0;
+}
+
+#skills li {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2a5298 100%);
+  color: #fff;
+  padding: 1.5rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#skills li:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(66, 165, 245, 0.4);
+}
+
+/* ========== FOOTER ========== */
+footer {
+  background: linear-gradient(135deg, #1a1f2e 0%, #2d3142 100%);
+  color: #e0e0e0;
+  text-align: center;
+  padding: 2rem;
+  margin-top: 3rem;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.5);
+}
+
+footer p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+footer a {
+  color: #42a5f5;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+footer a:hover {
+  color: #64b5f6;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  header {
+    padding: 2rem 1rem;
+  }
+
+  header h1 {
+    font-size: 2.2rem;
+  }
+
+  header p {
+    font-size: 1.1rem;
+  }
+
+  nav ul {
+    gap: 1.5rem;
+  }
+
+  section {
+    padding: 2rem 0;
+  }
+
+  section:nth-child(odd) {
+    padding: 2rem 1rem;
+  }
+
+  #skills ul {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  header h1 {
+    font-size: 1.8rem;
+  }
+
+  nav ul {
+    gap: 1rem;
+  }
+
+  nav a {
+    font-size: 0.95rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+}
