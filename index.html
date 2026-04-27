@@ -1,43 +1,612 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giovanni De Santi | IT Professional</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Giovanni De Santi</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --bg: #05060f;
+            --green: #00ff95;
+            --magenta: #ff0055;
+            --violet: #7c3aed;
+            --text: #e0e0ff;
+            --dim-text: rgba(224, 224, 255, 0.5);
+            --border: rgba(0, 255, 149, 0.2);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --font-sans: 'Inter', system-ui, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            letter-spacing: -0.02em;
+        }
+
+        /* CRT Scanline Effect */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Header */
+        header {
+            height: 40px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            background: rgba(5, 6, 15, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 10;
+        }
+
+        .sys-status {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-label {
+            font-size: 8px;
+            color: var(--dim-text);
+            text-transform: uppercase;
+        }
+
+        .glitch-text {
+            color: var(--green);
+            font-weight: bold;
+            position: relative;
+        }
+
+        /* Main Layout */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 1fr 200px;
+            gap: 1px;
+            background: var(--border);
+            overflow: hidden;
+        }
+
+        .panel {
+            background: var(--bg);
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--magenta);
+            padding-left: 8px;
+        }
+
+        .panel-title {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Log Stream */
+        .log-container {
+            height: calc(100% - 30px);
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .log-entry {
+            margin-bottom: 6px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .log-time { color: var(--dim-text); min-width: 65px; }
+        .log-tag { color: var(--magenta); font-weight: bold; }
+        .log-msg { color: var(--text); word-break: break-all; }
+
+        /* Center Stage */
+        .center-stage {
+            grid-column: 2;
+            grid-row: 1 / 3;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #three-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .overlay-data {
+            position: absolute;
+            z-index: 5;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .lost-indicator {
+            font-size: 80px;
+            font-family: var(--font-sans);
+            font-weight: 900;
+            line-height: 0.8;
+            color: var(--text);
+            text-shadow: 2px 0 var(--magenta), -2px 0 var(--green);
+            opacity: 0.8;
+        }
+
+        .japanese-sub {
+            font-size: 24px;
+            display: block;
+            margin-top: 10px;
+            color: var(--magenta);
+            letter-spacing: 0.5em;
+        }
+
+        /* Security Grid */
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-top: 10px;
+        }
+
+        .node {
+            height: 40px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            position: relative;
+        }
+
+        .node.active { background: rgba(0, 255, 149, 0.15); border-color: var(--green); }
+        .node.danger { background: rgba(255, 0, 85, 0.15); border-color: var(--magenta); animation: blink 0.5s infinite; }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Bottom Panel */
+        .bottom-panel {
+            grid-row: 2;
+            border-top: 1px solid var(--border);
+        }
+
+        .network-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .stat-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bar-label { width: 80px; font-size: 9px; color: var(--dim-text); }
+        .bar-bg { flex: 1; height: 4px; background: rgba(224, 224, 255, 0.1); border-radius: 2px; position: relative; }
+        .bar-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s ease; }
+
+        /* Footer */
+        footer {
+            height: 30px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 10px;
+            color: var(--dim-text);
+            background: #000;
+        }
+
+        .cmd-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .cursor {
+            width: 6px;
+            height: 12px;
+            background: var(--green);
+            animation: pulse 0.8s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Decorative Elements */
+        .pixel-sort {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: repeating-linear-gradient(0deg, var(--magenta) 0px, var(--magenta) 1px, transparent 1px, transparent 4px);
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .corner-tag {
+            position: absolute;
+            font-size: 8px;
+            color: var(--dim-text);
+        }
+        .tag-tl { top: 4px; left: 4px; }
+        .tag-br { bottom: 4px; right: 4px; }
+
+        /* Signal Wave */
+        .wave-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 40px;
+        }
+        .wave-bar {
+            width: 3px;
+            background: var(--green);
+            animation: wave-grow 1s infinite ease-in-out;
+        }
+
+        @keyframes wave-grow {
+            0%, 100% { height: 10%; }
+            50% { height: 100%; }
+        }
+
+        /* Skill Buttons */
+        .skills-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .skill-btn {
+            padding: 16px 12px;
+            background: rgba(0, 255, 149, 0.05);
+            border: 1px solid var(--green);
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-align: center;
+            letter-spacing: 0.05em;
+            box-shadow: inset 0 0 10px rgba(0, 255, 149, 0.1);
+        }
+
+        .skill-btn:hover {
+            transform: scale(1.15);
+            background: rgba(0, 255, 149, 0.15);
+            box-shadow: 0 0 15px rgba(0, 255, 149, 0.5), inset 0 0 15px rgba(0, 255, 149, 0.2);
+            border-color: var(--green);
+        }
+
+        .skill-btn.level-1 { opacity: 0.6; }
+        .skill-btn.level-2 { opacity: 0.8; }
+        .skill-btn.level-3 { opacity: 1; }
+    </style>
 </head>
-
 <body>
-    <header>
-        <h1>Giovanni De Santi</h1>
-        <p>Aspiring IT Professional & Junior Developer</p>
-    </header>
-    <section id="about">
-        <h2>About Me</h2>
-        <p>Im an IT professional based in launceston, Tasmania  with a background in computer systems, digital media, and programming. I'm passionate about solving technical problems and building things with code, and I'm currently looking for opportunities in IT support or junior development roles.</p>
-    </section>
-    <section id="skills">
-        <h2>Skills & Certifications</h2>
-        <ul>
-            <li>Cert IV in Computer Systems Technology</li>
-            <li>Cert III in Digital Media and Technology</li>
-            <li>Programming Skill Set</li>
-            <li>Python programming </li>
-            <li>Networking & IT Support</li>
-            <li>Hardware Troubleshooting</li>
-        </ul>
-    </section>
-    <section id="projects">
-        <h2>Projects</h2>
-        <p>Coming building — check back shortly!</p>
-    </section>
-    <section id="contact">
-       <p>Email: <a href="mailto:Wokkiee.ewok@gmail.com">Wokkiee.ewok@gmail.com</a></p>
-  </section>
-  <footer>
-    <p>© 2026 Wu-ki</p>
-  </footer>
-</body>
 
+    <header>
+        <div class="sys-status">
+            <div class="status-item">
+                <span class="status-label">Signal Status</span>
+                <span class="glitch-text" data-text="LOST_CONNECTION">LOST_CONNECTION</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Uptime</span>
+                <span id="uptime">00:44:12:09</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Core Temp</span>
+                <span style="color: var(--magenta)">74.2°C</span>
+            </div>
+        </div>
+        <div class="sys-status">
+            <span class="status-label">System Node: [0x884-A]</span>
+            <div class="wave-container" id="signal-wave"></div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Left: About Section -->
+        <section class="panel">
+            <span class="corner-tag tag-tl">ABOUT_ME</span>
+            <div class="panel-header">
+                <h2 class="panel-title">About Me</h2>
+                <span style="color: var(--green)">PROFILE</span>
+            </div>
+            <div class="log-container" id="about-content" style="padding-right: 8px;">
+                <p style="font-size: 15px; color: var(--text); line-height: 1.8; margin-bottom: 16px;">
+                    Hi, I’m Giovanni De Santi — a creative wanting to get into the world of coding and software development. I have got a backgound in art and design, and I am passionate about creating immersive digital experiences that blend aesthetics with functionality. I am currently learning Python, JavaScript, and web development to build interactive projects that reflect my cyberpunk-inspired style.
+                </p>
+                <div style="font-size: 12px; color: var(--dim-text); line-height: 1.8;">
+                    <p><strong>Focus:</strong> Frontend development, interactive design, motion graphics.</p>
+                    <p><strong>Skills:</strong> HTML, CSS, JavaScript, Three.js, responsive interfaces.</p>
+                    <p><strong>Interests:</strong> Cyberpunk aesthetics, UX storytelling, experimental animation.</p>
+                    <p><strong>Goals:</strong> Build memorable websites that feel futuristic, polished, and personal.</p>
+                </div>
+            </div>
+            <div class="pixel-sort"></div>
+        </section>
+
+        <!-- Center: 3D Visualization -->
+        <section class="center-stage panel">
+            <div id="three-container"></div>
+            <div class="overlay-data">
+                <div>
+                    <div class="lost-indicator">Giovanni De Santi<span class="japanese-sub">素敵な翻訳</span></div>
+                    <div style="font-size: 10px; margin-top: 20px; color: var(--green); width: 200px; border-top: 1px solid var(--green); padding-top: 5px;">
+                        SCANNING NEURAL INTERFACE...<br>
+                        ERROR: SUBJECT NOT FOUND
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div style="font-size: 8px; line-height: 1.5;">
+                        LAT: 35.6895 N<br>
+                        LNG: 139.6917 E<br>
+                        ALT: -42.8M
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="status-label">Encryption Level</span><br>
+                        <span style="color: var(--magenta); font-size: 14px;">AES-4096</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Skills Learning -->
+        <section class="panel">
+            <span class="corner-tag tag-tl">SKILLS_MATRIX</span>
+            <div class="panel-header">
+                <h2 class="panel-title">Learning Path</h2>
+            </div>
+            <div class="skills-container" id="skills-grid">
+                <button class="skill-btn level-3" data-skill="Python">Python</button>
+                <button class="skill-btn level-3" data-skill="JavaScript">JavaScript</button>
+                <button class="skill-btn level-2" data-skill="Networking">Networking</button>
+                <button class="skill-btn level-2" data-skill="IT Support">IT Support</button>
+                <button class="skill-btn level-2" data-skill="HTML/CSS">HTML/CSS</button>
+                <button class="skill-btn level-1" data-skill="React">React</button>
+                <button class="skill-btn level-1" data-skill="Node.js">Node.js</button>
+                <button class="skill-btn level-3" data-skill="Hardware">Hardware</button>
+            </div>
+            <div style="margin-top: 20px;">
+                <span class="status-label" style="display: block; margin-bottom: 8px;">Proficiency Legend:</span>
+                <div style="font-size: 8px; color: var(--dim-text); line-height: 1.6;">
+                    <div><span style="color: var(--green);">●●●</span> Advanced</div>
+                    <div><span style="color: var(--green);">●●</span> Intermediate</div>
+                    <div><span style="color: var(--green);">●</span> Learning</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Left: Network Stats -->
+        <section class="panel bottom-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Network Load</h2>
+            </div>
+            <div class="network-stats">
+                <div class="stat-bar-row">
+                    <span class="bar-label">UPLINK</span>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 78%; background: var(--magenta);"></div></div>
+                    <span style="width: 40px; text-align: right;">78%</span>
+                </div>
+                <div class="stat-bar-row">
+                    <span class="bar-label">DOWNLINK</span>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 42%;"></div></div>
+                    <span style="width: 40px; text-align: right;">42%</span>
+                </div>
+                <div class="stat-bar-row">
+                    <span class="bar-label">LATENCY</span>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 12%;"></div></div>
+                    <span style="width: 40px; text-align: right;">12ms</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Right: Fragments -->
+        <section class="panel bottom-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Fragments</h2>
+            </div>
+            <div style="font-size: 9px; color: var(--dim-text); line-height: 1.4;">
+                <div style="margin-bottom: 4px; color: var(--text)">[DECRYPTED_SEGMENT_#04]</div>
+                "The ghost in the machine is not a bug. It is the intent. The system was designed to be empty, so that something else could inhabit it..."
+            </div>
+            <span class="corner-tag tag-br">0xFF-EA-00</span>
+        </section>
+    </main>
+
+    <footer>
+        <div class="cmd-line">
+            <span style="color: var(--green)">user@root:~/lost_signal$</span>
+            <span id="typing-text">initializing protocol_delta...</span>
+            <span class="cursor"></span>
+        </div>
+        <div style="white-space: nowrap;">UTC 2077.10.24 // SECURE_SESS_88</div>
+    </footer>
+
+    <script>
+        // Skill Button Interactions
+        const skillBtns = document.querySelectorAll('.skill-btn');
+        skillBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const skill = this.getAttribute('data-skill');
+                // Add feedback animation
+                this.style.background = 'rgba(0, 255, 149, 0.25)';
+                setTimeout(() => {
+                    this.style.background = 'rgba(0, 255, 149, 0.15)';
+                }, 200);
+            });
+        });
+
+        // Signal Wave Animation
+        const wave = document.getElementById('signal-wave');
+        for (let i = 0; i < 15; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'wave-bar';
+            bar.style.animationDelay = `${i * 0.1}s`;
+            wave.appendChild(bar);
+        }
+
+        // Three.js Icosahedron
+        const container = document.getElementById('three-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        // Outer wireframe sphere
+        const geometry = new THREE.IcosahedronGeometry(1.5, 1);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x00ff95, 
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.3 
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        // Inner core (red)
+        const coreGeo = new THREE.IcosahedronGeometry(0.5, 0);
+        const coreMat = new THREE.MeshBasicMaterial({ color: 0xff0055, wireframe: true });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(core);
+
+        camera.position.z = 4;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            sphere.rotation.y += 0.005;
+            sphere.rotation.x += 0.002;
+            core.rotation.y -= 0.01;
+            
+            // Random glitch effect (commented out to remove pulsing)
+            /*
+            if (Math.random() > 0.98) {
+                sphere.scale.set(1.1, 1.1, 1.1);
+                material.opacity = 0.8;
+            } else {
+                sphere.scale.set(1, 1, 1);
+                material.opacity = 0.3;
+            }
+            */
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            renderer.setSize(w, h);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        });
+
+        // Mini Graph Canvas
+        const canvas = document.getElementById('mini-graph');
+        const ctx = canvas.getContext('2d');
+        let points = Array(30).fill(30);
+
+        function drawGraph() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#00ff95';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            points.shift();
+            points.push(20 + Math.random() * 30);
+            
+            for(let i=0; i<points.length; i++) {
+                const x = (canvas.width / points.length) * i;
+                const y = canvas.height - points[i];
+                if(i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            requestAnimationFrame(drawGraph);
+        }
+        drawGraph();
+
+        // Typing effect
+        const text = "connecting to remote_node... status: unstable... monitoring for signal_ghost... data_corruption_detected...";
+        let charIndex = 0;
+        const typingEl = document.getElementById('typing-text');
+        
+        function type() {
+            if (charIndex < text.length) {
+                typingEl.textContent += text.charAt(charIndex);
+                charIndex++;
+                setTimeout(type, 50 + Math.random() * 100);
+            } else {
+                setTimeout(() => {
+                    typingEl.textContent = "";
+                    charIndex = 0;
+                    type();
+                }, 5000);
+            }
+        }
+        typingEl.textContent = "";
+        type();
+    </script>
+
+</body>
 </html>
