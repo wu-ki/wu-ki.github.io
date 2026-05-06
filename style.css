@@ -197,6 +197,21 @@ main {
     position: relative;
 }
 
+.project {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.project h3 {
+  margin: 0 0 0.5rem;
+}
+
+.project a {
+  font-weight: bold;
+}
+
 .node.active { background: rgba(0, 255, 149, 0.15); border-color: var(--green); }
 .node.danger { background: rgba(255, 0, 85, 0.15); border-color: var(--magenta); animation: blink 0.5s infinite; }
 
